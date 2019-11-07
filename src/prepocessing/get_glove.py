@@ -20,10 +20,11 @@ def load_vectors(filepath):
 
 def load_embedding_matrix(data_folder, dims=100):
     """
-        Load glove embedding vectors to an embeddings matrix and create word-index mapping
-    :param data_folder: path to folder contain Glove file
+        Load glove embedding vectors/dictionary to an embeddings matrix and create word-index mapping
+    :param data_folder: path to folder contain Glove files
     :param dims: the dim of the embedding vector
-    :return:
+    :return: the word-to-indices mapping
+                embedding matrix
     """
     path = os.path.join(data_folder, 'glove.6B.' + str(dims) + 'd.txt')
     file = csv.reader(open(path), delimiter=' ', quoting=csv.QUOTE_NONE)

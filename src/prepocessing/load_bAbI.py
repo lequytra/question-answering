@@ -2,7 +2,6 @@ import re
 import os
 
 
-
 def get_raw(data_folder, task_id):
     """
         Return the correct name of the task given task id
@@ -92,3 +91,37 @@ def tokenize(sentence):
         list : List of tokens.
     """
     return [x.strip() for x in re.split('(\W+)?', sentence) if x.strip()]
+
+
+def to_embeddings(tasks, embedding_matrix, mapping):
+    """
+        Given a list of tasks, where each task is a dictionary of "C", "Q", and "A" (in text), to_embeddings
+        create the embeddings for these "C", "Q". Moreover, it create mappings for "A".
+    :param tasks: A list of tasks (dictionary)
+    :param embedding_matrix:
+    :param mapping: the word-to-indices mapping from Glove.
+    :return: 
+    """
+    embedded_context = []
+    embedded_question = []
+    answer_dict = dict()
+    curr = 0
+    answers = []
+    for task in tasks:
+        mapped_context = [mapping[w] if mapping.get(w) is not None else mapping["<UNK>"] for w in task["C"]]
+        embedded_context += [[embedding_matrix[i] for i in mapped_context]]
+        mapped_question = [mapping[w] if mapping.get(w) is not None else mapping["<UNK>"] for w in task["Q"]]
+        embedded_question += [[embedding_matrix[i] for i in mapped_question]]
+
+        answer_dict[task["A"]] = curr
+        if task["A"] not in answer_dict:
+            curr += 1
+            answer_dict[task["A"]] = curr
+        answers.append(task["A"])
+
+    answer_idx = [answer_dict[ans] for ans in answers]
+
+    return embedded_context, embedded_question, answer_idx, answer_dict
+
+
+
