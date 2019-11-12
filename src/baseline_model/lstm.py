@@ -1,23 +1,28 @@
 # Modified from
+# https://github.com/sujitpal/dl-models-for-qa
 # https://github.com/sujitpal/dl-models-for-qa/blob/master/src/babi-lstm.py
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function
+from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger, LearningRateScheduler, \
+    TensorBoard, RemoteMonitor
 from keras.layers import Dense, Dropout, RepeatVector, merge
-import keras.layers
-#import keras.layers
-# Merge need to import subclass directly
+from keras.layers import add
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.models import Model, Sequential
 import os
+import time
+import requests
 
 import getbAbi
 
-BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en"
 TASK_NBR = 1 # choose the task number
-EMBED_HIDDEN_SIZE = 50
-BATCH_SIZE = 32
-NBR_EPOCHS = 40
+EMBED_HIDDEN_SIZE = 50 # size of the vector space (word embedding)
+BATCH_SIZE = 32 # batch size for training
+NBR_EPOCHS = 50
+
+# path to the data txt
+BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en"
 
 train_file, test_file = getbAbi.get_files_for_task(TASK_NBR, BABI_DIR)
 
@@ -55,7 +60,7 @@ question_rnn.add(RepeatVector(story_maxlen))
 print("Generate embeddings for questions")
 
 # merge the two
-merged_model = keras.layers.add([story_rnn.output, question_rnn.output])
+merged_model = add([story_rnn.output, question_rnn.output])
 
 model_combined = Sequential()
 model_combined.add(LSTM(EMBED_HIDDEN_SIZE, return_sequences=False))
@@ -67,9 +72,39 @@ final_model = Model([story_rnn.input, question_rnn.input], model_combined(merged
 
 final_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 print("Training...")
+path = os.getcwd()
 
+checkpoints = ModelCheckpoint(filepath='lstm_task1/weights.epoch{epoch:02d}-val_loss{val_loss:.2f}.hdf5',
+                              monitor='val_loss',
+                              verbose=1,
+                              save_best_only=False,
+                              save_weights_only=False,
+                              mode='min',
+                              period=1)
+early_stopping = EarlyStopping(monitor='val_loss',
+                               min_delta=0.0,
+                               patience=15,
+                               verbose=1)
+csv_logger = CSVLogger(filename='lstm_task1/training_log.csv',
+                       separator=',',
+                       append=True)
+remote = RemoteMonitor()
+tensorboard = TensorBoard(log_dir="lstm_task1/logs/{}".format(time.time()),
+                          histogram_freq=0,
+                          batch_size=BATCH_SIZE,
+                          write_graph=True,
+                          write_grads=True,
+                          write_images=True,
+                          update_freq='batch')
+reduce_lr = ReduceLROnPlateau(monitor='val_loss',
+                              factor=0.2,
+                              patience=15,
+                              min_lr=0.001)
+callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, remote]                           
 final_model.fit([Xs_train, Xq_train], Y_train, 
-          batch_size=BATCH_SIZE, nb_epoch=NBR_EPOCHS, validation_split=0.05)
+          batch_size=BATCH_SIZE, nb_epoch=NBR_EPOCHS, validation_split=0.05, callbacks=callbacks)
+# Save model
+final_model.save('lstm_task1/lstm_task1.h5')
 loss, acc = final_model.evaluate([Xs_test, Xq_test], Y_test, batch_size=BATCH_SIZE)
 print("Test loss/accuracy = {:.4f}, {:.4f}".format(loss, acc))
-
+# Test loss/accuracy = 1.3352, 0.4690
