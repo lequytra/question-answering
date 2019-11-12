@@ -22,7 +22,7 @@ def get_stories(taskfile, only_support=False):
     ftask = open(taskfile, "rb")
     for line in ftask:
         line = line.strip()
-        nid, line = line.split(" ", 1)
+        nid, line = line.decode().split(" ", 1)
         if int(nid) == 1:
             # new story
             story_sents = []
@@ -92,5 +92,6 @@ if __name__ == "__main__":
     BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en"
     TASK_NBR = 1
     train_file, test_file = get_files_for_task(TASK_NBR, BABI_DIR)
-    print(train_file)
-    print(test_file)
+    taskfile = os.path.join(BABI_DIR, train_file)
+    get_stories(taskfile)
+    print("end")
