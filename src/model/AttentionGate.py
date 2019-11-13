@@ -1,6 +1,6 @@
 import tensorflow as tf
-from keras.layers import Layer, GRUCell, RNN
-from keras import regularizers
+from tensorflow.keras.layers import Layer, GRUCell, RNN
+from tensorflow.keras import regularizers
 from tensorflow.python.util import nest
 
 
