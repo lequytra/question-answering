@@ -101,8 +101,8 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                               patience=15,
                               min_lr=0.001)
 callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, remote]                           
-final_model.fit([Xs_train, Xq_train], Y_train, 
-          batch_size=BATCH_SIZE, nb_epoch=NBR_EPOCHS, validation_split=0.05, callbacks=callbacks)
+final_model.fit([Xs_train, Xq_train], Y_train, batch_size=BATCH_SIZE, nb_epoch=NBR_EPOCHS, validation_split=0.05, callbacks=callbacks)
+          
 # Save model
 final_model.save('lstm_task1/lstm_task1.h5')
 loss, acc = final_model.evaluate([Xs_test, Xq_test], Y_test, batch_size=BATCH_SIZE)

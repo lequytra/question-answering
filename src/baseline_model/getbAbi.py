@@ -88,6 +88,7 @@ def vectorize(data, word2idx, story_maxlen, question_maxlen):
             seq.pad_sequences(Xq, maxlen=question_maxlen),
             np.array(Y))
 
+# testing purpose
 if __name__ == "__main__":
     BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en"
     TASK_NBR = 1
