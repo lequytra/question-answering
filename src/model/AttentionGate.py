@@ -20,6 +20,9 @@ class EpisodicMemoryCell(GRUCell):
         self.m = m
         super(EpisodicMemoryCell, self).__init__(units=units, **kwargs)
 
+    def __call__(self, inputs, states, training):
+        return self.call(inputs, states, training)
+
     def call(self, inputs, states, training=None):
         """
             Forward pass for the layer.
@@ -36,6 +39,12 @@ class EpisodicMemoryCell(GRUCell):
         h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1, scores), states))
         return h_t, [h_t]
 
+    def reset_dropout_mask(self):
+        return super(EpisodicMemoryCell, self).reset_dropout_mask()
+
+    def reset_recurrent_dropout_mask(self):
+        return super(EpisodicMemoryCell, self).reset_recurrent_dropout_mask()
+
     def compute_output_shape(self, input_shape):
         # TODO: Implement this
         pass
@@ -43,20 +52,30 @@ class EpisodicMemoryCell(GRUCell):
 class EpisodicModule(RNN):
 
     def __init__(self, units,
+                 question,
+                 m,
                  attention_layer_units,
                  reg_scale=0.001,
                  trainable=True,
-                 iter_=3,
                  initial_state=None,
                  **kwargs):
         self.cell = EpisodicMemoryCell(units=units,
+                                       question=question,
+                                       m=m,
                                       attention_layer_units=attention_layer_units,
                                       reg_scale=reg_scale,
                                       trainable=trainable)
         self.initial_states = initial_state
         self.trainable = trainable
-        self.iter_ = iter_
         super(EpisodicModule, self).__init__(self.cell, **kwargs)
+
+    def __call__(self,
+             inputs,
+             initial_state=None,
+             masks=None,
+             training=None,
+             constants=None):
+        return self.call(inputs, initial_state, masks, training, constants)
 
     def call(self,
              inputs,
@@ -65,11 +84,13 @@ class EpisodicModule(RNN):
              training=None,
              constants=None):
 
-        context, question = inputs
-        # initially m = question
-        m = question
-        for i in range(self.iter_):
-            super(EpisodicModule, self).call(context)
+        self.cell.reset_dropout_mask()
+        self.cell.reset_recurrent_dropout_mask()
+        return super(EpisodicModule, self).call(inputs,
+                                                mask=masks,
+                                                training=training,
+                                                initial_state=initial_state)
+
 
 
 class AttentionLayer(Layer):
@@ -106,6 +127,9 @@ class AttentionLayer(Layer):
                                   trainable=self.trainable,
                                   shape=[1, 1])
         super(AttentionLayer, self).build(input_shape)
+
+    def __call__(self, inputs, **kwargs):
+        return self.call(inputs, **kwargs)
 
     def call(self, inputs, **kwargs):
         c, m, q = inputs
