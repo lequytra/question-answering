@@ -82,14 +82,17 @@ class EpisodicModule(RNN):
              initial_state=None,
              masks=None,
              training=None,
-             constants=None):
+             constants=None,
+             **kwargs):
 
         self.cell.reset_dropout_mask()
         self.cell.reset_recurrent_dropout_mask()
         return super(EpisodicModule, self).call(inputs,
                                                 mask=masks,
                                                 training=training,
-                                                initial_state=initial_state)
+                                                initial_state=initial_state,
+                                                constants=constants,
+                                                **kwargs)
 
 
 
@@ -126,12 +129,11 @@ class AttentionLayer(Layer):
         self.b2 = self.add_weight(name="b_2",
                                   trainable=self.trainable,
                                   shape=[1, 1])
-        super(AttentionLayer, self).build(input_shape)
 
-    def __call__(self, inputs, **kwargs):
-        return self.call(inputs, **kwargs)
+    def __call__(self, inputs):
+        return self.call(inputs)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         c, m, q = inputs
         batch_size = c.shape[0]
         z = [c, m, q, tf.multiply(c, q),
