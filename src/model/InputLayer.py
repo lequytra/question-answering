@@ -9,7 +9,7 @@ class PretrainedEmbedding(Layer):
     def __init__(self, embeddings, mask_zero=True, rate=0.1, **kwargs):
         self.embeddings = tf.constant(embeddings)
         self.mask_zero = mask_zero
-        self.dropout = Dropout(rate=rate)
+        self.dropout = Dropout(rate=rate, dtype='float64')
         super(PretrainedEmbedding, self).__init__(**kwargs)
 
     def __call__(self, input, training=None):
@@ -47,28 +47,13 @@ class InputModule(Layer):
 
     def __init__(self,
                  units,
-                 tokenizer,
-                 embedding,
-                 max_len=30,
-                 mask_zero=True,
-                 rate=0.1,
                  return_sequences=True,
                  **kwargs):
         super(InputModule, self).__init__(**kwargs)
-        self.embedding = PretrainedEmbedding(embeddings=embedding,
-                                             mask_zero=mask_zero,
-                                             rate=rate)
-        self.tokenizer = TokenizerLayer(tokenizer=tokenizer, max_len=max_len)
         self.gru = GRU(units=units, return_sequences=return_sequences, **kwargs)
 
     def __call__(self, input, mask=None):
         return self.call(input=input, mask=mask)
 
     def call(self, input, mask=None):
-        tokenized = self.tokenizer(input)
-        embedding = self.embedding(tokenized)
-
-        if mask is None:
-            mask = self.embedding.compute_mask(inputs=input)
-
-        return self.gru(embedding, mask=mask)
+        return self.gru(input, mask=mask)

@@ -35,7 +35,7 @@ class EpisodicMemoryCell(GRUCell):
         """
         # Get scores
         scores = self.g((inputs, self.m, self.question))
-        output, _ = super(EpisodicMemoryCell, self).call(inputs, states, training=training)
+        output, last_output = super(EpisodicMemoryCell, self).call(inputs, states, training=training)
         h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1, scores), states))
         return h_t, [h_t]
 
@@ -46,8 +46,7 @@ class EpisodicMemoryCell(GRUCell):
         return super(EpisodicMemoryCell, self).reset_recurrent_dropout_mask()
 
     def compute_output_shape(self, input_shape):
-        # TODO: Implement this
-        pass
+        return super(EpisodicMemoryCell, self).compute_output_shape(input_shape=input_shape)
 
 class EpisodicModule(RNN):
 
@@ -62,7 +61,7 @@ class EpisodicModule(RNN):
         self.cell = EpisodicMemoryCell(units=units,
                                        question=question,
                                        m=m,
-                                      attention_layer_units=attention_layer_units,
+                                      attention_units=attention_layer_units,
                                       reg_scale=reg_scale,
                                       trainable=trainable)
         self.initial_states = initial_state
@@ -72,29 +71,28 @@ class EpisodicModule(RNN):
     def __call__(self,
              inputs,
              initial_state=None,
-             masks=None,
-             training=None,
-             constants=None):
-        return self.call(inputs, initial_state, masks, training, constants)
+             mask=None,
+             training=None):
+        return self.call(inputs, initial_state, mask, training)
 
     def call(self,
              inputs,
              initial_state=None,
-             masks=None,
+             mask=None,
              training=None,
-             constants=None,
              **kwargs):
 
         self.cell.reset_dropout_mask()
         self.cell.reset_recurrent_dropout_mask()
+        print(inputs)
         return super(EpisodicModule, self).call(inputs,
-                                                mask=masks,
+                                                mask=mask,
                                                 training=training,
                                                 initial_state=initial_state,
-                                                constants=constants,
                                                 **kwargs)
 
-
+    def compute_output_shape(self, input_shape):
+        return super(EpisodicModule, self).compute_output_shape(input_shape)
 
 class AttentionLayer(Layer):
 
@@ -103,52 +101,52 @@ class AttentionLayer(Layer):
                  reg_scale=0.001,
                  trainable=True,
                  **kwargs):
+        super(AttentionLayer, self).__init__(**kwargs)
         self.attention_hidden_size = units
         self.reg_scale = reg_scale
         self.trainable = trainable
-        super(AttentionLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
+        input_shape = input_shape[0]
         hidden_size = input_shape[-1]
-        self.wb = self.add_weight(name="w_b",
-                                  shape=[hidden_size, hidden_size],
-                                  initializers='zeros',
-                                  trainable=self.trainable,
-                                  regularizers=regularizers.l2(self.reg_scale))
-        self.w1 = self.add_weight(name="w_1",
-                                  shape=[7 * hidden_size + 1, self.attention_hidden_size],
+        self.wb = self.add_weight(name="wb",
+                                  shape=(hidden_size, hidden_size),
+                                  initializer='zeros',
                                   trainable=self.trainable,
                                   regularizer=regularizers.l2(self.reg_scale))
-        self.b1 = self.add_weight(name="b_1",
-                                  trainable=self.trainable,
-                                  shape=[1, self.attention_hidden_size])
-        self.w2 = self.add_weight(name="w_2",
-                                  shape=[hidden_size, 1],
-                                  trainable=self.trainable,
-                                  regularizers=regularizers.l2(self.reg_scale))
-        self.b2 = self.add_weight(name="b_2",
-                                  trainable=self.trainable,
-                                  shape=[1, 1])
 
-    def __call__(self, inputs):
-        return self.call(inputs)
+        self.w1 = self.add_weight(name="w1",
+                                  shape=(7 * hidden_size + 2, self.attention_hidden_size),
+                                  trainable=self.trainable,
+                                  regularizer=regularizers.l2(self.reg_scale))
+
+        self.b1 = self.add_weight(name="b1",
+                                  trainable=self.trainable,
+                                  shape=(1, self.attention_hidden_size))
+        self.w2 = self.add_weight(name="w2",
+                                  shape=(self.attention_hidden_size, 1),
+                                  trainable=self.trainable,
+                                  regularizer=regularizers.l2(self.reg_scale))
+        self.b2 = self.add_weight(name="b2",
+                                  trainable=self.trainable,
+                                  shape=(1, 1))
+        super(AttentionLayer, self).build(input_shape)
 
     def call(self, inputs):
         c, m, q = inputs
-        batch_size = c.shape[0]
+        wb_q = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), q), axis=-1), axis=-1)
+        wb_m = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), m), axis=-1), axis=-1)
+
         z = [c, m, q, tf.multiply(c, q),
-             tf.multiply(c, m), tf.abs(tf.subtract(c, q)), tf.abs(tf.subtract(c, m)),
-             tf.reshape(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), q)), (batch_size, 1)),
-             tf.reshape(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), m)), (batch_size, 1))]
+             tf.multiply(c, m), tf.abs(tf.subtract(c, q)), tf.abs(tf.subtract(c, m)), wb_q, wb_m]
 
         z = tf.concat(values=z, axis=1)
 
-        scores = tf.tanh(tf.add(tf.matmul(self.w1, z), self.b1))
-        scores = tf.sigmoid(tf.add(tf.matmul(self.w2, scores), self.b2))
+        scores = tf.tanh(tf.add(tf.matmul(z, self.w1), self.b1))
+        scores = tf.sigmoid(tf.add(tf.matmul(scores, self.w2), self.b2))
 
         return scores
 
     def compute_output_shape(self, input_shape):
-        batch_size = input_shape[0]
-        hidden_size = input_shape[-1]
-        return (batch_size, hidden_size)
+        batch_size = input_shape[0][0]
+        return (batch_size, 1)
