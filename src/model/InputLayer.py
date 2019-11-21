@@ -9,15 +9,10 @@ class PretrainedEmbedding(Layer):
     def __init__(self, embeddings, mask_zero=True, rate=0.1, **kwargs):
         self.embeddings = tf.constant(embeddings)
         self.mask_zero = mask_zero
-        self.dropout = Dropout(rate=rate, dtype='float64')
         super(PretrainedEmbedding, self).__init__(**kwargs)
 
-    def __call__(self, input, training=None):
-        return self.call(input, training)
-
     def call(self, input, training=None):
-        output = tf.nn.embedding_lookup(self.embeddings, input)
-        return self.dropout(output, training=training)
+         return tf.nn.embedding_lookup(self.embeddings, input)
 
     def compute_mask(self, inputs, mask=None):
         if not self.mask_zero:

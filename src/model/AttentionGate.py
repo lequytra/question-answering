@@ -20,8 +20,8 @@ class EpisodicMemoryCell(GRUCell):
         self.question = question
         self.m = m
 
-    def __call__(self, inputs, states, training):
-        return self.call(inputs, states, training)
+    # def __call__(self, inputs, states, training):
+    #     return self.call(inputs, states, training)
 
     def call(self, inputs, states, training=None):
         """
@@ -36,7 +36,7 @@ class EpisodicMemoryCell(GRUCell):
         # Get scores
         scores = self.g((inputs, self.m, self.question))
         output, last_output = super(EpisodicMemoryCell, self).call(inputs, states, training=training)
-        h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1, scores), states[0]))
+        h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1.0, scores), states[0]))
         return h_t, [h_t]
 
     def reset_dropout_mask(self):
@@ -68,12 +68,12 @@ class EpisodicModule(RNN):
         self.trainable = trainable
         super(EpisodicModule, self).__init__(self.cell, **kwargs)
 
-    def __call__(self,
-             inputs,
-             initial_state=None,
-             mask=None,
-             training=None):
-        return self.call(inputs, initial_state, mask, training)
+    # def __call__(self,
+    #          inputs,
+    #          initial_state=None,
+    #          mask=None,
+    #          training=None):
+    #     return self.call(inputs, initial_state, mask, training)
 
     def call(self,
              inputs,
@@ -140,8 +140,10 @@ class AttentionLayer(Layer):
         # Find the number of time steps in input
         n_timestep = c.shape[1]
         # Tile the context and question states for broadcasting
-        m = tf.tile(input=m, multiples=[1, n_timestep, 1])
-        q = tf.tile(input=q, multiples=[1, n_timestep, 1])
+        # tf.print(tf.rank(c))
+        # if tf.rank(c) > 2:
+        #     m = tf.tile(input=m, multiples=[1, n_timestep, 1])
+        #     q = tf.tile(input=q, multiples=[1, n_timestep, 1])
 
         wb_q = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), q), axis=-1), axis=-1)
         wb_m = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), m), axis=-1), axis=-1)
