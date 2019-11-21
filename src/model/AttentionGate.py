@@ -13,12 +13,12 @@ class EpisodicMemoryCell(GRUCell):
                  reg_scale=0.001,
                  trainable=True,
                  **kwargs):
+        super(EpisodicMemoryCell, self).__init__(units=units, **kwargs)
         self.g = AttentionLayer(units=attention_units,
                                 reg_scale=reg_scale,
                                 trainable=trainable)
         self.question = question
         self.m = m
-        super(EpisodicMemoryCell, self).__init__(units=units, **kwargs)
 
     def __call__(self, inputs, states, training):
         return self.call(inputs, states, training)
@@ -36,7 +36,7 @@ class EpisodicMemoryCell(GRUCell):
         # Get scores
         scores = self.g((inputs, self.m, self.question))
         output, last_output = super(EpisodicMemoryCell, self).call(inputs, states, training=training)
-        h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1, scores), states))
+        h_t = tf.add(tf.multiply(scores, output), tf.multiply(tf.subtract(1, scores), states[0]))
         return h_t, [h_t]
 
     def reset_dropout_mask(self):
@@ -109,6 +109,7 @@ class AttentionLayer(Layer):
     def build(self, input_shape):
         input_shape = input_shape[0]
         hidden_size = input_shape[-1]
+
         self.wb = self.add_weight(name="wb",
                                   shape=(hidden_size, hidden_size),
                                   initializer='zeros',
@@ -123,6 +124,7 @@ class AttentionLayer(Layer):
         self.b1 = self.add_weight(name="b1",
                                   trainable=self.trainable,
                                   shape=(1, self.attention_hidden_size))
+
         self.w2 = self.add_weight(name="w2",
                                   shape=(self.attention_hidden_size, 1),
                                   trainable=self.trainable,
@@ -130,17 +132,24 @@ class AttentionLayer(Layer):
         self.b2 = self.add_weight(name="b2",
                                   trainable=self.trainable,
                                   shape=(1, 1))
+
         super(AttentionLayer, self).build(input_shape)
 
-    def call(self, inputs):
-        c, m, q = inputs
+    def call(self, input):
+        c, m, q = input
+        # Find the number of time steps in input
+        n_timestep = c.shape[1]
+        # Tile the context and question states for broadcasting
+        m = tf.tile(input=m, multiples=[1, n_timestep, 1])
+        q = tf.tile(input=q, multiples=[1, n_timestep, 1])
+
         wb_q = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), q), axis=-1), axis=-1)
         wb_m = tf.expand_dims(tf.reduce_sum(tf.multiply(tf.matmul(c, self.wb), m), axis=-1), axis=-1)
 
         z = [c, m, q, tf.multiply(c, q),
              tf.multiply(c, m), tf.abs(tf.subtract(c, q)), tf.abs(tf.subtract(c, m)), wb_q, wb_m]
 
-        z = tf.concat(values=z, axis=1)
+        z = tf.concat(values=z, axis=-1)
 
         scores = tf.tanh(tf.add(tf.matmul(z, self.w1), self.b1))
         scores = tf.sigmoid(tf.add(tf.matmul(scores, self.w2), self.b2))
