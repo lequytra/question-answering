@@ -35,7 +35,7 @@ def DMN(n_answer,
     embedding_layer = PretrainedEmbedding(embeddings=embedding, mask_zero=mask_zero, rate=DROPOUT_RATE)
     context, context_mask = embedding_layer(in_context), embedding_layer.compute_mask(in_context)
     question, question_mask = embedding_layer(in_question), embedding_layer.compute_mask(in_question)
-    print(context_mask.shape)
+
     context, c_lst = GRU(units=INPUT_LAYER_UNIT,
                                   return_sequences=True,
                                   return_state=True)(context, mask=context_mask)
@@ -45,15 +45,36 @@ def DMN(n_answer,
                                     return_state=True)(question, mask=question_mask)
 
     # TODO: this looks problematic. Maybe we should not pass m from the beginning to EPISODIC CELL?
-    attention, m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
                                   question=question,
                                   attention_layer_units=ATTENTION_LAYER_UNITS,
                                   m=question,
                                   reg_scale=REG_SCALE,
                                   trainable=trainable,
                                   return_sequences=False,
+                                  return_state=False,
+                                  zero_output_for_mask=True,
+                                  unroll=True)(context, mask=context_mask)
+    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+                                  question=question,
+                                  attention_layer_units=ATTENTION_LAYER_UNITS,
+                                  m=m,
+                                  reg_scale=REG_SCALE,
+                                  trainable=trainable,
+                                  return_sequences=False,
                                   return_state=True,
-                                  zero_output_for_mask=True)(context, mask=context_mask)
+                                  zero_output_for_mask=True,
+                                  unroll=True)(context, mask=context_mask)
+    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+                                  question=question,
+                                  attention_layer_units=ATTENTION_LAYER_UNITS,
+                                  m=m,
+                                  reg_scale=REG_SCALE,
+                                  trainable=trainable,
+                                  return_sequences=False,
+                                  return_state=True,
+                                  zero_output_for_mask=True,
+                                  unroll=True)(context, mask=context_mask)
 
     answer, answer_mask = embedding_layer(in_answer), embedding_layer.compute_mask(in_answer)
     # Concat question and answer embeddings
@@ -63,7 +84,8 @@ def DMN(n_answer,
                      trainable=trainable,
                      return_sequences=True,
                      return_state=False,
-                     zero_output_for_mask=True)(input, mask=answer_mask)
+                     zero_output_for_mask=True,
+                     unroll=True)(input, mask=answer_mask, initial_state=m)
     # Decode the predicted answer out
     answer_outputs = LinearRegression(units=n_answer,
                                       reg_scale=REG_SCALE,
