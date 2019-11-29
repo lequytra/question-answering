@@ -107,4 +107,8 @@ venv.bak/
 .idea/
 data/
 src/model/testLayer.py
+weights.*
+training_log.csv
+logs/
+model.png
 
