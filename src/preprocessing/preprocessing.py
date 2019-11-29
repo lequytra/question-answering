@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer as T
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow import sequence_mask
 
-from get_glove import load_vectors
+from preprocessing.get_glove import load_vectors
 
 MAX_CONTENT_LENGTH = 10
 MAX_QUESTION_LENGTH = 30
@@ -62,19 +62,17 @@ MAX_QUESTION_LENGTH = 30
 #     return t, embedding_matrix
 
 
-@tf.function
 def transform(input, max_len, tokenizer):
     if not isinstance(input, list):
         input = [input]
     res = tokenizer.fit_on_texts(input)
     return pad_sequences(res, maxlen=max_len, padding='post', truncating='post')
 
-@tf.function
 def get_embeddings(tokenizer, embed_dict, dim):
     embeddings_matrix = np.zeros(shape=(len(tokenizer.word_index) + 1, dim))
     for key, item in tokenizer.word_index.items():
         if key in embed_dict:
-            embeddings_matrix[item] = embed_dict[key]
+            embeddings_matrix[item, :] = embed_dict[key]
 
     return embeddings_matrix
 
@@ -85,13 +83,16 @@ def make_tokenizer(file_list):
     for file in list_:
         with open(file, 'r') as f:
             lines = f.read().strip()
-            t.fit_on_text([lines])
+            t.fit_on_texts([lines])
+
+    # Add the start and end character
+    t.fit_on_texts(['<STR>', '\n'])
 
     return t
 
 def main(dim, embedding_folder, data_folder):
     # Load the embeddings vectors
-    embedding_path = embedding_folder + 'glove.6B.{}d.txt'.format(dim)
+    embedding_path = os.path.join(embedding_folder, 'glove.6B.{}d.txt'.format(dim))
     tokenizer = make_tokenizer(data_folder)
     # Reading embedding matrix
     print("Start loading embedding matrix")
@@ -114,4 +115,8 @@ def main(dim, embedding_folder, data_folder):
     return
 
 if __name__ == '__main__':
-    main()
+    curr = os.getcwd()
+    embedding_folder = os.path.join(curr, '../../data/glove')
+    data_folder = os.path.join(curr, '../../data/merged')
+    main(300, embedding_folder, data_folder)
+
