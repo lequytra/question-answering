@@ -2,9 +2,9 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, GRU
 from tensorflow.keras.models import Model
 try:
-    from AnswerModule import *
-    from AttentionGate import *
-    from InputLayer import *
+    from model.AnswerModule import *
+    from model.AttentionGate import *
+    from model.InputLayer import *
 except ModuleNotFoundError:
     from src.model.AnswerModule import *
     from src.model.AttentionGate import *
@@ -76,22 +76,13 @@ def DMN(n_answer,
                                   zero_output_for_mask=True,
                                   unroll=True)(context, mask=context_mask)
 
-    answer, answer_mask = embedding_layer(in_answer), embedding_layer.compute_mask(in_answer)
-    # Concat question and answer embeddings
-    q = tf.tile(input=tf.expand_dims(question, axis=1), multiples=[1, answer.shape[1], 1])
-    input = tf.concat([answer, q], axis=-1)
-    answer_out = GRU(units=EPISODIC_LAYER_UNITS,
-                     trainable=trainable,
-                     return_sequences=True,
-                     return_state=False,
-                     zero_output_for_mask=True,
-                     unroll=True)(input, mask=answer_mask, initial_state=m)
+    input = tf.concat([m, question], axis=-1)
     # Decode the predicted answer out
     answer_outputs = LinearRegression(units=n_answer,
                                       reg_scale=REG_SCALE,
-                                      trainable=trainable)(answer_out)
+                                      trainable=trainable)(input)
 
-    model = Model([in_context, in_question, in_answer], answer_outputs)
+    model = Model([in_context, in_question], answer_outputs)
     return model
 
 
