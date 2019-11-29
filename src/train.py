@@ -11,12 +11,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
     LearningRateScheduler, TensorBoard, RemoteMonitor, History, ModelCheckpoint
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import load_model
-
-code_path = ['home/tranle/Desktop/CSC395/question-answering/src/model',
-             'home/tranle/Desktop/CSC395/question-answering/src/preprocessing']
-data_path = '~/Desktop/GrinnellCollege/CSC395/question-answering/data/merged'
-if not code_path in sys.path:
-    sys.path.append(code_path)
+from tensorflow.keras.utils import to_categorical
 
 from model.DMN import *
 from preprocessing.preprocessing import transform
@@ -34,17 +29,17 @@ BATCH_SIZE = 32
 NUM_EPOCHS = 50
 MAX_CONTEXT = 30
 MAX_QUESTION = 10
-n_answer = 0
+
 ###################################
 #       Loading dataset           #
 ###################################
-
+data_path = os.path.join(os.getcwd(), '../data/merged')
 # Get tokenizer
-with open(os.path.join(data_path, 'special/tokenizer.p'), 'rb') as f:
-    tokenizer = pickle.loads(f)
+with open(os.path.join(os.getcwd(), '../data/merged/special/tokenizer.p'), 'rb') as f:
+    tokenizer = pickle.load(f)
 
-with open(os.path.join(data_path, 'special/embedding_matrix.npy'), 'rb') as f:
-    embeddings = np.load(f)
+with open(os.path.join(os.getcwd(), '../data/merged/special/embedding_matrix.npy'), 'rb') as f:
+    embeddings = np.load(f, allow_pickle=True)
 
 with open(os.path.join(data_path, 'Context_Train.txt'), 'r') as f:
     context = f.read().strip().split('\n')
@@ -52,16 +47,17 @@ with open(os.path.join(data_path, 'Question_Train.txt'), 'r') as f:
     question = f.read().strip().split('\n')
 with open(os.path.join(data_path, 'Answer_Train.txt'), 'r') as f:
     answer = f.read().strip().split('\n')
-n_answer = len(answer)
+# Get dictionary length
+n_words = len(tokenizer.word_index)
 context = transform(context, max_len=MAX_CONTEXT, tokenizer=tokenizer)
 question = transform(question, max_len=MAX_QUESTION, tokenizer=tokenizer)
 answer = transform(answer, max_len=1, tokenizer=tokenizer)
-
+answer = to_categorical(tf.squeeze(answer, axis=1), num_classes=n_words)
 ###################################
 #          Model                  #
 ###################################
 
-model = DMN(n_answer, embeddings, mask_zero=MASK_ZERO, trainable=True)
+model = DMN(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
 
 if OPTIMIZER == 'rmsprop':
     op = RMSprop(learning_rate=LEARNING_RATE)
@@ -123,7 +119,7 @@ callbacks = [checkpoints,
 
 validation_split = 0.2
 
-history = model.fit(x={'in_context': context, 'in_question': question},
+history = model.fit(x=[context, question],
                     y=answer,
                     batch_size=BATCH_SIZE,
                     epochs=NUM_EPOCHS,

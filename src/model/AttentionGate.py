@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Layer, GRUCell, RNN
 from tensorflow.keras import regularizers
 from tensorflow.python.util import nest
-
+import sys
 
 class EpisodicMemoryCell(GRUCell):
 
@@ -56,7 +56,6 @@ class EpisodicModule(RNN):
                  attention_layer_units,
                  reg_scale=0.001,
                  trainable=True,
-                 initial_state=None,
                  **kwargs):
         self.cell = EpisodicMemoryCell(units=units,
                                        question=question,
@@ -64,7 +63,7 @@ class EpisodicModule(RNN):
                                       attention_units=attention_layer_units,
                                       reg_scale=reg_scale,
                                       trainable=trainable)
-        self.initial_states = initial_state
+
         self.trainable = trainable
         super(EpisodicModule, self).__init__(self.cell, **kwargs)
 
@@ -84,7 +83,7 @@ class EpisodicModule(RNN):
 
         self.cell.reset_dropout_mask()
         self.cell.reset_recurrent_dropout_mask()
-        print(inputs)
+
         return super(EpisodicModule, self).call(inputs,
                                                 mask=mask,
                                                 training=training,
@@ -138,7 +137,7 @@ class AttentionLayer(Layer):
     def call(self, input):
         c, m, q = input
         # Find the number of time steps in input
-        n_timestep = c.shape[1]
+        # n_timestep = c.shape[1]
         # Tile the context and question states for broadcasting
         # tf.print(tf.rank(c))
         # if tf.rank(c) > 2:

@@ -15,8 +15,8 @@ DROPOUT_RATE = 0.1
 EPISODIC_LAYER_UNITS = 4
 ATTENTION_LAYER_UNITS = 3
 REG_SCALE = 0.001
-MAX_CONTEXT_LENGTH = 20
-MAX_QUESTION_LENGTH = 15
+MAX_CONTEXT_LENGTH = 30
+MAX_QUESTION_LENGTH = 10
 MAX_ANSWER_LENGTH = 3
 EMBEDDING_DIMS = 300
 
@@ -40,43 +40,43 @@ def DMN(n_answer,
                                   return_sequences=True,
                                   return_state=True)(context, mask=context_mask)
 
-    question, q_lst = GRU(units=INPUT_LAYER_UNIT,
-                                    return_sequences=False,
-                                    return_state=True)(question, mask=question_mask)
+    question = GRU(units=INPUT_LAYER_UNIT,
+                    return_sequences=False,
+                    return_state=False)(question, mask=question_mask)
 
-    # TODO: this looks problematic. Maybe we should not pass m from the beginning to EPISODIC CELL?
-    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=question,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=False,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, mask=context_mask)
-    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=m,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=True,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, mask=context_mask)
-    m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=m,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=True,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, mask=context_mask)
+    # # TODO: this looks problematic. Maybe we should not pass m from the beginning to EPISODIC CELL?
+    # m1 = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+    #                               question=question,
+    #                               attention_layer_units=ATTENTION_LAYER_UNITS,
+    #                               m=question,
+    #                               reg_scale=REG_SCALE,
+    #                               trainable=trainable,
+    #                               return_sequences=False,
+    #                               return_state=False,
+    #                               zero_output_for_mask=True,
+    #                               unroll=True)(context, initial_state=question, mask=context_mask)
+    # m2 = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+    #                               question=question,
+    #                               attention_layer_units=ATTENTION_LAYER_UNITS,
+    #                               m=m1,
+    #                               reg_scale=REG_SCALE,
+    #                               trainable=trainable,
+    #                               return_sequences=False,
+    #                               return_state=False,
+    #                               zero_output_for_mask=True,
+    #                               unroll=True)(context, initial_state=m1, mask=context_mask)
+    # m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+    #                               question=question,
+    #                               attention_layer_units=ATTENTION_LAYER_UNITS,
+    #                               m=m2,
+    #                               reg_scale=REG_SCALE,
+    #                               trainable=trainable,
+    #                               return_sequences=False,
+    #                               return_state=False,
+    #                               zero_output_for_mask=True,
+    #                               unroll=True)(context, initial_state=m2, mask=context_mask)
 
-    input = tf.concat([m, question], axis=-1)
+    input = tf.concat([question, question], axis=-1)
     # Decode the predicted answer out
     answer_outputs = LinearRegression(units=n_answer,
                                       reg_scale=REG_SCALE,

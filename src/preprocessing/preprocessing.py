@@ -65,7 +65,7 @@ MAX_QUESTION_LENGTH = 30
 def transform(input, max_len, tokenizer):
     if not isinstance(input, list):
         input = [input]
-    res = tokenizer.fit_on_texts(input)
+    res = tokenizer.texts_to_sequences(input)
     return pad_sequences(res, maxlen=max_len, padding='post', truncating='post')
 
 def get_embeddings(tokenizer, embed_dict, dim):
