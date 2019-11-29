@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer as T
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow import sequence_mask
 
-from get_glove import load_vectors
+import get_glove
 
 MAX_CONTENT_LENGTH = 10
 MAX_QUESTION_LENGTH = 30
@@ -62,14 +62,12 @@ MAX_QUESTION_LENGTH = 30
 #     return t, embedding_matrix
 
 
-@tf.function
 def transform(input, max_len, tokenizer):
     if not isinstance(input, list):
         input = [input]
     res = tokenizer.fit_on_texts(input)
     return pad_sequences(res, maxlen=max_len, padding='post', truncating='post')
 
-@tf.function
 def get_embeddings(tokenizer, embed_dict, dim):
     embeddings_matrix = np.zeros(shape=(len(tokenizer.word_index) + 1, dim))
     for key, item in tokenizer.word_index.items():
@@ -85,7 +83,7 @@ def make_tokenizer(file_list):
     for file in list_:
         with open(file, 'r') as f:
             lines = f.read().strip()
-            t.fit_on_text([lines])
+            t.fit_on_texts([lines])
 
     return t
 
@@ -95,7 +93,7 @@ def main(dim, embedding_folder, data_folder):
     tokenizer = make_tokenizer(data_folder)
     # Reading embedding matrix
     print("Start loading embedding matrix")
-    embed_dict = load_vectors(embedding_path)
+    embed_dict = get_glove.load_vectors(embedding_path)
     embedding_matrix = get_embeddings(tokenizer, embed_dict, dim=dim)
 
     path = os.path.join(data_folder, 'special')
@@ -114,4 +112,6 @@ def main(dim, embedding_folder, data_folder):
     return
 
 if __name__ == '__main__':
-    main()
+    embedding_path = "/home/stellasylee/Documents/CSC395/question-answering/script/data/glove/"
+    data_path = "/home/stellasylee/Documents/CSC395/question-answering/script/data/merged/"
+    main(300, embedding_path, data_path)
