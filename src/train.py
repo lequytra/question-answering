@@ -4,7 +4,6 @@ import pickle
 import time
 import numpy as np
 
-
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, RMSprop
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger, \
@@ -78,11 +77,11 @@ if not os.path.isdir(log_dir):
     os.mkdir(log_dir)
 
 # Initialize Keras callbacks
-checkpoints = ModelCheckpoint(filepath='/weights.epoch{epoch:02d}-val_loss{val_loss:.2f}.hdf5',
+checkpoints = ModelCheckpoint(filepath='weights.epoch{epoch:02d}-val_loss{val_loss:.2f}.hdf5',
                              monitor='val_loss',
                              verbose=1,
                              save_best_only=False,
-                             save_weights_only=False,
+                             save_weights_only=True,
                              mode='min',
                              period=1)
 
@@ -123,6 +122,6 @@ history = model.fit(x=[context, question],
                     y=answer,
                     batch_size=BATCH_SIZE,
                     epochs=NUM_EPOCHS,
-                    verbose=2,
+                    verbose=1,
                     callbacks=callbacks,
                     validation_split=validation_split)
