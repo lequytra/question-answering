@@ -8,7 +8,10 @@ from tensorflow.keras.preprocessing.text import Tokenizer as T
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow import sequence_mask
 
-from preprocessing.get_glove import load_vectors
+
+import get_glove
+
+#from preprocessing.get_glove import load_vectors
 
 MAX_CONTENT_LENGTH = 10
 MAX_QUESTION_LENGTH = 30
@@ -96,7 +99,7 @@ def main(dim, embedding_folder, data_folder):
     tokenizer = make_tokenizer(data_folder)
     # Reading embedding matrix
     print("Start loading embedding matrix")
-    embed_dict = load_vectors(embedding_path)
+    embed_dict = get_glove.load_vectors(embedding_path)
     embedding_matrix = get_embeddings(tokenizer, embed_dict, dim=dim)
 
     path = os.path.join(data_folder, 'special')
@@ -115,6 +118,10 @@ def main(dim, embedding_folder, data_folder):
     return
 
 if __name__ == '__main__':
+    #embedding_path = "/home/stellasylee/Documents/CSC395/question-answering/script/data/glove/"
+    #data_path = "/home/stellasylee/Documents/CSC395/question-answering/script/data/merged/"
+    #main(300, embedding_path, data_path)
+
     curr = os.getcwd()
     embedding_folder = os.path.join(curr, '../../data/glove')
     data_folder = os.path.join(curr, '../../data/merged')
