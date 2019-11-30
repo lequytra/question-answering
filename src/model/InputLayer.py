@@ -19,6 +19,13 @@ class PretrainedEmbedding(Layer):
         output_mask = K.not_equal(inputs, 0)
         return output_mask
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({'embeddings': self.embeddings,
+                       'mask_zero': self.mask_zero
+                       })
+        return config
+
 class InputModule(Layer):
 
     def __init__(self,

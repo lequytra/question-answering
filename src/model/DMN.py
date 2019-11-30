@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Input, GRU
+from tensorflow.keras.backend import constant
 from tensorflow.keras.models import Model
 try:
     from model.AnswerModule import *
@@ -43,38 +44,40 @@ def DMN(n_answer,
     question = GRU(units=INPUT_LAYER_UNIT,
                     return_sequences=False,
                     return_state=False)(question, mask=question_mask)
+    # question = tf.expand_dims(question, axis=1)
+
+    initial_states = [question, question, question]
 
     # TODO: this looks problematic. Maybe we should not pass m from the beginning to EPISODIC CELL?
-    m1 = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=question,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=False,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, initial_state=question, mask=context_mask)
-    m2 = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=m1,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=False,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, initial_state=m1, mask=context_mask)
+    m1, states = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+                      attention_layer_units=ATTENTION_LAYER_UNITS,
+                      reg_scale=REG_SCALE,
+                      trainable=trainable,
+                      return_sequences=False,
+                      return_state=True,
+                      zero_output_for_mask=True,
+                      unroll=True)(context, initial_state=initial_states, mask=context_mask)
+    # m1 = tf.expand_dims(m1, axis=1)
+    initial_states = [states, m1, question]
+
+    m2, states2 = EpisodicModule(units=EPISODIC_LAYER_UNITS,
+                      attention_layer_units=ATTENTION_LAYER_UNITS,
+                      reg_scale=REG_SCALE,
+                      trainable=trainable,
+                      return_sequences=False,
+                      return_state=True,
+                      zero_output_for_mask=True,
+                      unroll=True)(context, initial_state=initial_states, mask=context_mask)
+    # m2 = tf.expand_dims(m2, axis=1)
+    initial_states = [states2, m2, question]
     m = EpisodicModule(units=EPISODIC_LAYER_UNITS,
-                                  question=question,
-                                  attention_layer_units=ATTENTION_LAYER_UNITS,
-                                  m=m2,
-                                  reg_scale=REG_SCALE,
-                                  trainable=trainable,
-                                  return_sequences=False,
-                                  return_state=False,
-                                  zero_output_for_mask=True,
-                                  unroll=True)(context, initial_state=m2, mask=context_mask)
+                      attention_layer_units=ATTENTION_LAYER_UNITS,
+                      reg_scale=REG_SCALE,
+                      trainable=trainable,
+                      return_sequences=False,
+                      return_state=False,
+                      zero_output_for_mask=True,
+                      unroll=True)(context, initial_state=initial_states, mask=context_mask)
 
     input = tf.concat([m, question], axis=-1)
     # Decode the predicted answer out

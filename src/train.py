@@ -13,6 +13,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import to_categorical
 
 from model.DMN import *
+from model.AttentionModel.model import *
 from preprocessing.preprocessing import transform
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
@@ -22,12 +23,12 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 ##################################
 
 MASK_ZERO = True
-LEARNING_RATE = 0.001
-OPTIMIZER = 'rmsprop'
+LEARNING_RATE = 0.01
+OPTIMIZER = 'adam'
 BATCH_SIZE = 32
-NUM_EPOCHS = 50
-MAX_CONTEXT = 30
-MAX_QUESTION = 10
+NUM_EPOCHS = 200
+MAX_CONTEXT = 50
+MAX_QUESTION = 30
 
 ###################################
 #       Loading dataset           #
@@ -56,7 +57,8 @@ answer = to_categorical(tf.squeeze(answer, axis=1), num_classes=n_words)
 #          Model                  #
 ###################################
 
-model = DMN(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
+# model = DMN(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
+model = AttentionModel(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
 
 if OPTIMIZER == 'rmsprop':
     op = RMSprop(learning_rate=LEARNING_RATE)
@@ -65,7 +67,7 @@ else:
 
 print("Compiling the model ... ")
 
-model.compile(optimizer=op, loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=op, loss='categorical_crossentropy', metrics=['categorical_accuracy', 'mae'])
 
 path = os.getcwd()
 checkpoint_dir = os.path.join(path, 'checkpoints')
@@ -87,7 +89,7 @@ checkpoints = ModelCheckpoint(filepath='weights.epoch{epoch:02d}-val_loss{val_lo
 
 early_stopping = EarlyStopping(monitor='val_loss',
                                min_delta=0.0,
-                               patience=15,
+                               patience=30,
                                verbose=1)
 
 csv_logger = CSVLogger(filename='training_log.csv',
@@ -105,16 +107,21 @@ tensorboard = TensorBoard(log_dir="{}/{}".format(log_dir, time.time()),
                           update_freq='batch')
 
 reduce_lr = ReduceLROnPlateau(monitor='val_loss',
-                                         factor=0.2,
-                                         patience=15,
-                                         min_lr=0.001)
+                             factor=0.5,
+                             patience=10,
+                             min_lr=0.00005)
 
-callbacks = [checkpoints,
-            early_stopping,
+def scheduler(epoch):
+    if epoch == 0:
+        return LEARNING_RATE
+    else:
+            return LEARNING_RATE * np.power(0.5, np.floor(epoch/25, dtype=np.float32), dtype=np.float32)
+
+lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
+callbacks = [lr_scheduler,
             csv_logger,
-            tensorboard,
-            reduce_lr,
-            remote]
+            tensorboard
+            ]
 
 validation_split = 0.2
 
@@ -124,4 +131,5 @@ history = model.fit(x=[context, question],
                     epochs=NUM_EPOCHS,
                     verbose=1,
                     callbacks=callbacks,
+                    shuffle=True,
                     validation_split=validation_split)
