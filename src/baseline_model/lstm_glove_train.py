@@ -103,7 +103,7 @@ early_stopping = EarlyStopping(monitor='val_loss',
                                min_delta=0.0,
                                patience=15,
                                verbose=1)
-csv_logger = CSVLogger(filename='training_log.csv',
+csv_logger = CSVLogger(filename='lstm_training_log.csv',
                        separator=',',
                        append=True)
 remote = RemoteMonitor()
@@ -122,3 +122,4 @@ callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, re
 
 final_model.fit(x = [context, question],  y=encoded_answer,
           batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.05, callbacks= callbacks)
+final_model.save('lstm_glove_train.h5')

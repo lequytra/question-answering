@@ -120,8 +120,8 @@ def separate_files_cqa (task_num, train, stories, save_dir):
 
 # saving file
 if __name__ == "__main__":
-    BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en"
-    SAVE_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/merged/"
+    BABI_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en-10k"
+    SAVE_DIR = "/home/stellasylee/Documents/CSC395/question-answering/script/data/en-10k-merged/"
 
     # Saving each of tasks into Context, Question, and Answer
     for task_num in range(1,21):
