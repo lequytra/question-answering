@@ -13,12 +13,12 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 import time
 
-data_path = '/home/stellasylee/Documents/CSC395/question-answering/script/data/merged'
+data_path = '/home/tranle/Desktop/GrinnellCollege/CSC395/question-answering/data/merged'
 
 BATCH_SIZE = 32 # batch size for training
-NBR_EPOCHS = 100
-MAX_CONTEXT = 30
-MAX_QUESTION = 10
+NBR_EPOCHS = 200
+MAX_CONTEXT = 50
+MAX_QUESTION = 20
 
 ###################################
 #       Loading dataset           #
@@ -34,11 +34,11 @@ with open(os.path.join(data_path, 'special/embedding_matrix.npy'), 'rb') as f:
     embedding_matrix = np.load(f, allow_pickle=True)
 
 # Get Training data
-with open(os.path.join(data_path, 'Context_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Context_Train_2.txt'), 'r') as f:
     context = f.read().strip().split('\n')
-with open(os.path.join(data_path, 'Question_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Question_Train_2.txt'), 'r') as f:
     question = f.read().strip().split('\n')
-with open(os.path.join(data_path, 'Answer_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Answer_Train_2.txt'), 'r') as f:
     answer = f.read().strip().split('\n')
 
 context = transform(context, max_len=MAX_CONTEXT, tokenizer=tokenizer)
@@ -79,7 +79,7 @@ model_combined.add(Dense(vocab_size, activation="softmax"))
 # combine models
 final_model = Model([context_model.input, question_model.input], model_combined(merged_model))
 print(final_model.summary())
-final_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+final_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["categorical_accuracy", "mae"])
 
 print("Training...")
 
@@ -118,7 +118,7 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                               factor=0.2,
                               patience=15,
                               min_lr=0.001)
-callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, remote]
+callbacks = [tensorboard, reduce_lr]
 
 final_model.fit(x = [context, question],  y=encoded_answer,
-          batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.05, callbacks= callbacks)
+          batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.2, callbacks= callbacks)

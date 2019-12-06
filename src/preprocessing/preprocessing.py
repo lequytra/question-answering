@@ -9,7 +9,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow import sequence_mask
 
 
-import get_glove
+from preprocessing import get_glove
 
 #from preprocessing.get_glove import load_vectors
 
