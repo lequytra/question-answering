@@ -106,7 +106,9 @@ def AttentionModel3(n_answer,
                            return_state=False)(context, mask=context_mask)
 
     c = tf.expand_dims(tf.reduce_sum(tf.multiply(context_weighted, attention), axis=-2), axis=-1)
-    pred = Output_Layer(units=n_answer)([c, tf.expand_dims(question_state, axis=-1)])
+    # pred = Output_Layer(units=n_answer)([c, tf.expand_dims(question_state, axis=-1)])
+    pred = Dense(units=n_answer, activation='softmax')(tf.reduce_sum(c, axis=-1))
+
 
     model = Model([in_context, in_question], pred)
     return model
@@ -155,3 +157,12 @@ class Output_Layer(Layer):
         tot = tf.math.add(inputs[0], inputs[1])
         res = tf.matmul(self.W, tot)
         return tf.nn.softmax(res, axis=-1)
+
+    def get_config(self):
+        config = super(Output_Layer, self).get_config()
+        config.update({
+            'units': self.units,
+            'W': self.W
+        })
+
+        return config

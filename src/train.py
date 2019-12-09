@@ -84,7 +84,7 @@ if not os.path.isdir(log_dir):
 checkpoints = ModelCheckpoint(filepath='weights.epoch{epoch:02d}-val_loss{val_loss:.2f}.hdf5',
                              monitor='val_loss',
                              verbose=1,
-                             save_best_only=False,
+                             save_best_only=True,
                              save_weights_only=True,
                              mode='min',
                              period=1)
@@ -137,4 +137,3 @@ history = model.fit(x=[context, question],
                     callbacks=callbacks,
                     shuffle=True,
                     validation_split=validation_split)
-pred = model.predict(x=[context[:5], question[:5]])
