@@ -23,8 +23,8 @@ data_path = '/home/stellasylee/Documents/CSC395/question-answering/data/merged'
 BATCH_SIZE = 32 # batch size for training
 NBR_EPOCHS = 200
 MAX_CONTEXT = 50
-MAX_QUESTION = 30
 TASK_NBR = 5 # choose the task number
+MAX_QUESTION = 20
 
 ###################################
 #       Loading dataset           #
@@ -85,7 +85,7 @@ model_combined.add(Dense(vocab_size, activation="softmax"))
 # combine models
 final_model = Model([context_model.input, question_model.input], model_combined(merged_model))
 print(final_model.summary())
-final_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+final_model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["categorical_accuracy", "mae"])
 
 print("Training...")
 
@@ -124,8 +124,8 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                               factor=0.2,
                               patience=15,
                               min_lr=0.001)
-callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, remote]
+callbacks = [tensorboard, reduce_lr]
 
 final_model.fit(x = [context, question],  y=encoded_answer,
-          batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.05)
+                batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.2, callbacks= callbacks)
 final_model.save('lstm_glove_train{}.h5'.format(TASK_NBR))

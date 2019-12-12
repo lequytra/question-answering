@@ -20,7 +20,7 @@ class PretrainedEmbedding(Layer):
         return output_mask
 
     def get_config(self):
-        config = super().get_config()
+        config = super(PretrainedEmbedding, self).get_config()
         config.update({'embeddings': self.embeddings,
                        'mask_zero': self.mask_zero
                        })

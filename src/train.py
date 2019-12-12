@@ -14,6 +14,7 @@ from tensorflow.keras.utils import to_categorical
 
 from model.DMN import *
 from model.AttentionModel.model import *
+from model.AttentionModel.model2 import *
 from preprocessing.preprocessing import transform
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
@@ -28,7 +29,7 @@ session = tf.compat.v1.Session(config=config)
 ##################################
 
 MASK_ZERO = True
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.00001
 OPTIMIZER = 'adam'
 BATCH_SIZE = 32
 NUM_EPOCHS = 5
@@ -46,14 +47,15 @@ with open(os.path.join(os.getcwd(), '../data/merged/special/tokenizer.p'), 'rb')
 with open(os.path.join(os.getcwd(), '../data/merged/special/embedding_matrix.npy'), 'rb') as f:
     embeddings = np.load(f, allow_pickle=True)
 
-with open(os.path.join(data_path, 'Context_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Context_Train_2.txt'), 'r') as f:
     context = f.read().strip().split('\n')
-with open(os.path.join(data_path, 'Question_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Question_Train_2.txt'), 'r') as f:
     question = f.read().strip().split('\n')
-with open(os.path.join(data_path, 'Answer_Train.txt'), 'r') as f:
+with open(os.path.join(data_path, '../merged10/Answer_Train_2.txt'), 'r') as f:
     answer = f.read().strip().split('\n')
 # Get dictionary length
 n_words = len(tokenizer.word_index)
+print(n_words)
 context = transform(context, max_len=MAX_CONTEXT, tokenizer=tokenizer)
 question = transform(question, max_len=MAX_QUESTION, tokenizer=tokenizer)
 answer = transform(answer, max_len=1, tokenizer=tokenizer)
@@ -63,7 +65,7 @@ answer = to_categorical(tf.squeeze(answer, axis=1), num_classes=n_words)
 ###################################
 
 # model = DMN(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
-model = AttentionModel(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
+model = AttentionModel3(n_words, embeddings, mask_zero=MASK_ZERO, trainable=True)
 
 if OPTIMIZER == 'rmsprop':
     op = RMSprop(learning_rate=LEARNING_RATE)
@@ -87,7 +89,7 @@ if not os.path.isdir(log_dir):
 checkpoints = ModelCheckpoint(filepath='weights.epoch{epoch:02d}-val_loss{val_loss:.2f}.hdf5',
                              monitor='val_loss',
                              verbose=1,
-                             save_best_only=False,
+                             save_best_only=True,
                              save_weights_only=True,
                              mode='min',
                              period=1)
@@ -123,13 +125,15 @@ def scheduler(epoch):
             return LEARNING_RATE * np.power(0.5, np.floor(epoch/25, dtype=np.float32), dtype=np.float32)
 
 lr_scheduler = tf.keras.callbacks.LearningRateScheduler(scheduler)
+
 callbacks = [lr_scheduler,
             csv_logger,
-            tensorboard
+            tensorboard,
+             checkpoints
             ]
 
 validation_split = 0.2
-
+# model.summary()
 history = model.fit(x=[context, question],
                     y=answer,
                     batch_size=BATCH_SIZE,

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import GRU, Attention, Input, Dense, Bidirectional
+from tensorflow.keras.layers import GRU, Attention, Input, Dense, Bidirectional, LSTM
 from tensorflow.keras.models import Model
 
 from model.InputLayer import PretrainedEmbedding
@@ -7,7 +7,7 @@ from model.InputLayer import PretrainedEmbedding
 INPUT_LAYER_UNIT = 4
 DROPOUT_RATE = 0.1
 CONTEXTUAL_UNITS = 32
-ATTENTION_LAYER_UNITS =32
+ATTENTION_LAYER_UNITS = 32
 REG_SCALE = 0.001
 MAX_CONTEXT_LENGTH = 50
 MAX_QUESTION_LENGTH = 30
@@ -28,9 +28,10 @@ def AttentionModel(n_answer,
     context, context_mask = embedding_layer(in_context), embedding_layer.compute_mask(in_context)
     question, question_mask = embedding_layer(in_question), embedding_layer.compute_mask(in_question)
 
-    context_output, context_states = GRU(units=CONTEXTUAL_UNITS,
-                                       return_sequences=True,
-                                       return_state=True)(context, mask=context_mask)
+    context_output, h = GRU(units=CONTEXTUAL_UNITS,
+                               return_sequences=True,
+                               return_state=True)(context, mask=context_mask)
+
     question_output = GRU(units=CONTEXTUAL_UNITS,
                           return_sequences=True,
                           return_state=False)(question, mask=question_mask)
@@ -40,12 +41,12 @@ def AttentionModel(n_answer,
                                    return_state=False),
                                 merge_mode=None)(context_output,
                                                mask=context_mask,
-                                               initial_state=[context_states, context_states])
+                                               initial_state=[h, h])
 
     fw, bw = context_out[0], context_out[1]
 
     attention_fw = Attention(use_scale=True)([
-        question_output, context_output
+        question_output, fw
     ])
     attention_bw = Attention(use_scale=True)([
         question_output, bw
