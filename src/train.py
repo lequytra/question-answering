@@ -18,6 +18,11 @@ from preprocessing.preprocessing import transform
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+# fix "Fail to find the dnn implementation"
+config = tf.compat.v1.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf.compat.v1.Session(config=config)
+
 ##################################
 #           Hyper params         #
 ##################################
@@ -26,7 +31,7 @@ MASK_ZERO = True
 LEARNING_RATE = 0.01
 OPTIMIZER = 'adam'
 BATCH_SIZE = 32
-NUM_EPOCHS = 200
+NUM_EPOCHS = 5
 MAX_CONTEXT = 50
 MAX_QUESTION = 30
 
@@ -133,3 +138,6 @@ history = model.fit(x=[context, question],
                     callbacks=callbacks,
                     shuffle=True,
                     validation_split=validation_split)
+
+model.save('train_model_sample.h5')
+# NotImplementedError: Layers with arguments in `__init__` must override `get_config`.

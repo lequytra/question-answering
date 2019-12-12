@@ -62,7 +62,9 @@ def main():
             answer = model.predict([context, question])
 
             correct_tag_id = np.argmax(answer) # Turn one hot encoding to index
-            # TODO: this only gives us index 10 which is bedroom
+            # TODO: this only gives index 10 which is bedroom
+            # pred_word_ind = model.predict_classes(pad_encoded,verbose=0)[0]
+            # This doesnt work somehow saying there is no predict_classes
             word = reverse_word_map.get(correct_tag_id)
             print(word)
 

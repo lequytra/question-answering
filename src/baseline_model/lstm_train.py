@@ -24,7 +24,8 @@ BATCH_SIZE = 32 # batch size for training
 NBR_EPOCHS = 200
 MAX_CONTEXT = 50
 MAX_QUESTION = 30
-TASK_NBR = 5 # choose the task number
+TASK_NBR = 3 # choose the task number
+EMBED_HIDDEN_SIZE = 300 # size of the vector space (word embedding)
 
 ###################################
 #       Loading dataset           #
@@ -34,10 +35,6 @@ TASK_NBR = 5 # choose the task number
 with open(os.path.join(data_path, 'special/tokenizer.p'), 'rb') as f:
     tokenizer = pickle.load(f)
 vocab_size = len(tokenizer.word_index) + 1
-
-# Get embedding matrix
-with open(os.path.join(data_path, 'special/embedding_matrix.npy'), 'rb') as f:
-    embedding_matrix = np.load(f, allow_pickle=True)
 
 # Get Training data
 with open(os.path.join(data_path, 'Context_Train_{}.txt'.format(TASK_NBR)), 'r') as f:
@@ -58,16 +55,14 @@ encoded_answer = to_categorical(tf.squeeze(answer, axis=1), num_classes=vocab_si
 #       Model                     #
 ###################################
 context_model = Sequential()
-context_model.add(Embedding(vocab_size, output_dim=300, weights = [embedding_matrix],
-                            input_length=MAX_CONTEXT, trainable=False))
+context_model.add(Embedding(vocab_size, EMBED_HIDDEN_SIZE, input_length=MAX_CONTEXT))
 context_model.add(Dropout(0.3))
 # summarize the model
 print(context_model.summary())
 
 # generate embeddings for question and make adaptable to story
 question_model = Sequential()
-question_model.add(Embedding(vocab_size, output_dim=300, weights = [embedding_matrix],
-                             input_length=MAX_QUESTION, trainable=False))
+question_model.add(Embedding(vocab_size, EMBED_HIDDEN_SIZE, input_length=MAX_QUESTION))
 question_model.add(Dropout(0.3))
 question_model.add(LSTM(300, return_sequences=False))
 question_model.add(RepeatVector(MAX_CONTEXT))
@@ -128,4 +123,4 @@ callbacks = [checkpoints, early_stopping, csv_logger, tensorboard, reduce_lr, re
 
 final_model.fit(x = [context, question],  y=encoded_answer,
           batch_size=BATCH_SIZE, epochs=NBR_EPOCHS, validation_split=0.05)
-final_model.save('lstm_glove_train{}.h5'.format(TASK_NBR))
+final_model.save('lstm_train{}.h5'.format(TASK_NBR))
