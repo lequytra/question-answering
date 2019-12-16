@@ -44,7 +44,7 @@ This folder contains `fetch_glove.sh` and `get_bAbi.sh` which is used to downloa
 1. `AttentionModel` contains our QA Attention, Attention+Mem models implementation
    - `model2.py` contains
      - `AttentionModel2`
-     ![Attention](paper/AttentionModel.png)
+     ![Attention](paper/AttentionModel.png){:height="70%" width="70%"}
      - `AttentionModel3`
      ![AttentionMEM](paper/AttentionMemModel.png)
 2. `InputLayer.py` contains `PretrainedEmbedding(Layer)` that is used for our custom models used for GloVe embedding layers
