@@ -34,15 +34,14 @@ This folder contains `fetch_glove.sh` and `get_bAbi.sh` which is used to downloa
 
 1. `lstm_train.py` and `lstm_test.py` is implementation for LSTM model 
 2. `lstm_glove_train.py` and `lstm_glove_test.py` is implementation for LSTM model using GloVe pre-trained word embeddings
-<img src="paper/LSTMModel.png" alt="LSTMModel" style="zoom: 33%;" />
-<img src="paper/LSTMModel.png" alt="LSTMModel" alt="test image size" height="50%" width="50%">
+<img src="paper/LSTMModel.png" alt="LSTM Model" alt="test image size" height="50%" width="50%">
+
 ## model
 
 1. `AttentionModel` contains our QA Attention, Attention+Mem models implementation
    - `model2.py` contains
      - `AttentionModel2`
-     ![Attention](paper/AttentionModel.png){:height="50%" width="50%"}
+     <img src="paper/AttentionModel.png" alt="Attention Model" alt="test image size" height="50%" width="50%">
      - `AttentionModel3`
-     ![AttentionMEM](paper/AttentionMemModel.png){:height="50%" width="50%"}
-     <img src="/img/post-bg-2015.jpg" alt="test image size" height="100px" width="400px">
+     <img src="paper/AttentionMemModel.png" alt="Attention+Memory Model" alt="test image size" height="50%" width="50%">
 2. `InputLayer.py` contains `PretrainedEmbedding(Layer)` that is used for our custom models used for GloVe embedding layers
