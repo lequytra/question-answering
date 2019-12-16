@@ -5,6 +5,18 @@ Grinnell College CSC 395 Information Retrieval
 
 This repository contains the implementation of question-answering model which primary goals to understand sequential context. 
 
+**Dependency**
+
+>```sys```  ```os```  ```pickle```   ```csv```
+>
+>```numpy```    ```time``` ```re```
+>
+>```tensorflow``` 
+>
+>```tensorflow.keras.models``` ```tensorflow.keras.utils``` ```tensorflow.keras.callbacks``` ```tensorflow.keras.layers``` ```tensorflow.keras.optimizers``` 
+>
+>```tensorflow.keras.preprocessing``` ```tensorflow.keras.preprocessing.text``` ```tensorflow.keras.preprocessing.sequence``` 
+
 ## Github repository structure
 
 ### script
@@ -34,14 +46,21 @@ This folder contains `fetch_glove.sh` and `get_bAbi.sh` which is used to downloa
 
 1. `lstm_train.py` and `lstm_test.py` is implementation for LSTM model 
 2. `lstm_glove_train.py` and `lstm_glove_test.py` is implementation for LSTM model using GloVe pre-trained word embeddings
-<img src="paper/LSTMModel.png" alt="LSTM Model" alt="test image size" height="50%" width="50%">
+
+   <img src="paper/LSTMModel.png" alt="LSTM Model" alt="test image size" height="50%" width="50%">
 
 ## model
 
 1. `AttentionModel` contains our QA Attention, Attention+Mem models implementation
-   - `model2.py` contains
-     - `AttentionModel2`
-     <img src="paper/AttentionModel.png" alt="Attention Model" alt="test image size" height="50%" width="50%">
-     - `AttentionModel3`
-     <img src="paper/AttentionMemModel.png" alt="Attention+Memory Model" alt="test image size" height="50%" width="50%">
+
+    `model2.py` contains
+    - `AttentionModel2`
+    
+       <img src="paper/AttentionModel.png" alt="Attention Model" alt="test image size" height="50%" width="50%">
+       
+    - `AttentionModel3`
+    
+       <img src="paper/AttentionMemModel.png" alt="Attention+Memory Model" alt="test image size" height="50%" width="50%">
+
+
 2. `InputLayer.py` contains `PretrainedEmbedding(Layer)` that is used for our custom models used for GloVe embedding layers
