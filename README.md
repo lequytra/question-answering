@@ -11,12 +11,9 @@ This repository contains the implementation of question-answering model which pr
 >
 >```numpy```    ```time``` ```re```
 >
->```tensorflow``` 
+>```tensorflow 2.0.0``` 
 >
->```tensorflow.keras.models``` ```tensorflow.keras.utils``` ```tensorflow.keras.callbacks``` ```tensorflow.keras.layers``` ```tensorflow.keras.optimizers``` 
->
->```tensorflow.keras.preprocessing``` ```tensorflow.keras.preprocessing.text``` ```tensorflow.keras.preprocessing.sequence``` 
-
+>```tensorflow.keras``` 
 ## Github repository structure
 
 ### script
