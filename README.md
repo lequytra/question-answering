@@ -1,11 +1,9 @@
 # Question Answering model
 
 Tran Le, Stella (Seoyeon) Lee
-
 Grinnell College CSC 395 Information Retrieval
 
 This repository contains the implementation of question-answering model which primary goals to understand sequential context. 
-
 
 ## Github repository structure
 
@@ -37,14 +35,14 @@ This folder contains `fetch_glove.sh` and `get_bAbi.sh` which is used to downloa
 1. `lstm_train.py` and `lstm_test.py` is implementation for LSTM model 
 2. `lstm_glove_train.py` and `lstm_glove_test.py` is implementation for LSTM model using GloVe pre-trained word embeddings
 
-![LSTM](paper/LSTMModel.png)
+![LSTM](paper/LSTMModel.png){:height="50%" width="50%"}
 
 ## model
 
 1. `AttentionModel` contains our QA Attention, Attention+Mem models implementation
    - `model2.py` contains
      - `AttentionModel2`
-     ![Attention](paper/AttentionModel.png){:height="70%" width="70%"}
+     ![Attention](paper/AttentionModel.png){:height="50%" width="50%"}
      - `AttentionModel3`
-     ![AttentionMEM](paper/AttentionMemModel.png)
+     ![AttentionMEM](paper/AttentionMemModel.png){:height="50%" width="50%"}
 2. `InputLayer.py` contains `PretrainedEmbedding(Layer)` that is used for our custom models used for GloVe embedding layers
