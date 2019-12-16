@@ -35,7 +35,7 @@ This folder contains `fetch_glove.sh` and `get_bAbi.sh` which is used to downloa
 1. `lstm_train.py` and `lstm_test.py` is implementation for LSTM model 
 2. `lstm_glove_train.py` and `lstm_glove_test.py` is implementation for LSTM model using GloVe pre-trained word embeddings
 <img src="paper/LSTMModel.png" alt="LSTMModel" style="zoom: 33%;" />
-
+<img src="paper/LSTMModel.png" alt="LSTMModel" alt="test image size" height="50%" width="50%">
 ## model
 
 1. `AttentionModel` contains our QA Attention, Attention+Mem models implementation
